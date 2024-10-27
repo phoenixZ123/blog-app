@@ -1,0 +1,110 @@
+{
+  "blog": [
+    {
+      "id": "1",
+      "user_id": 1,
+      "title": "Travel to Bagan",
+      "image": "/src/assets/bagan.jpg",
+      "recommand": "Bagan is located on the banks of the Irrawaddy River in Central Myanmar (formerly known as Burma) and is the site of the densest collection of Buddhist temples",
+      "category_name": "Travel",
+      "rating": 4,
+      "date": "2024-10-17"
+    },
+    {
+      "id": "2",
+      "user_id": 1,
+      "title": "Buying maybelline foundation",
+      "image": "/src/assets/bagan.jpg",
+      "recommand": "Don't expect it to brighten your face. No. It is very, very good for acne. Yeah. Helps to like calm down redness on the face, helping the .",
+      "category_name": "Fashion and beauty",
+      "rating": 3,
+      "date": "2024-10-20"
+    },
+    {
+      "id": "3",
+      "user_id": 2,
+      "title": "Buying snailwhite foundation",
+      "image": "/src/assets/bagan.jpg",
+      "recommand": "Don't expect it to brighten your face. No. It is very, very good for acne. Yeah. Helps to like calm down redness on the face, helping the .",
+      "category_name": "Fashion and beauty",
+      "rating": 3,
+      "date": "2024-10-23"
+    },
+    {
+      "id": "4",
+      "user_id": 2,
+      "title": "doing next prj",
+      "recommand": "blog app ",
+      "category_name": "DIY Craft",
+      "rating": 3,
+      "date": "2024-10-21"
+    },
+    {
+      "id": "a97672",
+      "title": "next",
+      "recommand": "next",
+      "rating": 4,
+      "category_name": "Fashion and beauty",
+      "date": "2024-10-09"
+    },
+    {
+      "id": "a6923",
+      "title": "gg",
+      "recommand": "gg",
+      "rating": 3,
+      "category_name": "Travel",
+      "date": "2024-10-15"
+    }
+  ],
+  "user": [
+    {
+      "user_id": 1,
+      "name": "Pwint Phoo Wai",
+      "email": "phuephue1125@gmail.com",
+      "password": "112519",
+      "id": "4e89"
+    },
+    {
+      "user_id": 2,
+      "name": "Novem Wai",
+      "email": "pwintphoowai@ucstaungoo.edu.mm",
+      "password": "taungooTgo@2022",
+      "id": "45b9"
+    }
+  ],
+  "admin": [
+    {
+      "admin_id": 1,
+      "name": "John Doe",
+      "email": "johndoe@example.com",
+      "password": "hashed_password_1",
+      "created_at": "2024-10-17T10:53:08.452Z",
+      "id": "1ef4"
+    },
+    {
+      "admin_id": 2,
+      "name": "Jane Smith",
+      "email": "janesmith@example.com",
+      "password": "hashed_password_2",
+      "created_at": "2024-10-17T11:00:08.452Z",
+      "id": "61d1"
+    }
+  ],
+  "category": [
+    {
+      "id": "1",
+      "admin_id": 1,
+      "category_name": "Travel"
+    },
+    {
+      "id": "2",
+      "admin_id": 1,
+      "category_name": "Fashion and beauty"
+    },
+    {
+      "id": "3",
+      "admin_id": 1,
+      "category_name": "DIY Craft"
+    }
+  ]
+}
