@@ -1,15 +1,17 @@
-import React, { useRef } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { SwitchTransition, CSSTransition } from "react-transition-group";
 import "./layout.css";
+import { Themecontext } from "../contexts/ThemeContext";
 
 export const Layout = () => {
   const nodeRef = useRef(null); // Reference for the animated div
   const location = useLocation();
-
+  let [theme,setTheme]=useState(useContext(Themecontext).theme);
+  // console.log(theme);
   return (
-    <div>
+    <div data-theme={`${theme}`} >
       <Navbar />
       <SwitchTransition>
         <CSSTransition

@@ -70,6 +70,7 @@ export const BlogList = () => {
               </Link>
             ))}
           </div>
+          {!filteredData.length && <p className="text-center text-gray-500 text-xl">Search Results Not Found</p>}
         </motion.div>
       )}
     </>
