@@ -1,4 +1,4 @@
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "../firebase";
@@ -16,14 +16,16 @@ export const BlogDetail = () => {
       try {
         const ref = doc(db, "blogs", id);
         const docSnap = await getDoc(ref);
-        if (docSnap.exists()) {
-          const blogData = { id: docSnap.id, ...docSnap.data() };
+      onSnapshot(ref,doc=>{
+        if (doc.exists()) {
+          const blogData = { id: doc.id, ...doc.data() };
           setBlog(blogData);
           setRating(blogData.rating); // Set initial rating
           setLoading(false);
         } else {
           setError("Blog not found");
         }
+      })
       } catch (err) {
         setError("Failed to load blog data.");
       } finally {
