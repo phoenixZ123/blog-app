@@ -1,16 +1,38 @@
+import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useFetch } from "../hooks/useFetch";
+import { db } from "../firebase";
 
 export const BlogDetail = () => {
   let { id } = useParams();
-  const [rating, setRating] = useState(0); // Initialize rating state
-
-  const { data: blog, loading, error } = useFetch(`http://localhost:3000/blog/${id}`);
+  let [rating, setRating] = useState(0); // Initialize rating state
+  let [error, setError] = useState("");
+  let [blog, setBlog] = useState(null);
+  let [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (blog) setRating(blog.rating);
-  }, [blog]);
+    const fetchBlog = async () => {
+      setLoading(true);
+      try {
+        const ref = doc(db, "blogs", id);
+        const docSnap = await getDoc(ref);
+        if (docSnap.exists()) {
+          const blogData = { id: docSnap.id, ...docSnap.data() };
+          setBlog(blogData);
+          setRating(blogData.rating); // Set initial rating
+          setLoading(false);
+        } else {
+          setError("Blog not found");
+        }
+      } catch (err) {
+        setError("Failed to load blog data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlog();
+  }, [id]);
 
   return (
     <div className="h-screen">
@@ -43,7 +65,9 @@ export const BlogDetail = () => {
                     ))}
                   </div>
                 </div>
-                <div className="text-gray-500 text-sm">{blog.date}</div>
+                <div className="text-gray-500 text-sm">
+                  {blog.date ? new Date(blog.date).toLocaleDateString() : "No date"}
+                </div>
               </div>
             </div>
           </div>

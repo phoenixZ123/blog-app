@@ -1,9 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import { Home } from "../pages/Home.jsx";
-import { Create } from "../pages/Create.jsx";
 import { Layout } from "../layouts/Layout.jsx";
 import { Search } from "../pages/Search.jsx";
 import { BlogDetail } from "../components/BlogDetail.jsx";
+import { BlogForm } from "../pages/BlogForm.jsx";
 
 const router = createBrowserRouter([
   {
@@ -15,12 +15,16 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/blog/:id",
+        path: "/blogs/:id",
         element: <BlogDetail />,
       },
       {
         path: "/create",
-        element: <Create />,
+        element: <BlogForm />,
+      },
+      {
+        path:"/edit/:id",
+        element:<BlogForm/>
       },
       {
         path: "/search",

@@ -1,20 +1,26 @@
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Themecontext } from "../contexts/ThemeContext";
+import useTheme from "../hooks/useTheme";
 export const Navbar = () => {
   let [search, setSearch] = useState("");
-  
+  let { theme, changeTheme } = useTheme();
+  // let [blogTheme, setBlogTheme] = useState("");
   let navigate = useNavigate();
   let handleSearch = () => {
     navigate(`/?search=${search}`);
     setSearch("");
   };
+
+  const handleChangeTheme = (e) => {
+    changeTheme(e.target.value); 
+  };
   return (
-    <nav className="border border-b-1 shadow-sm" >
+    <nav className="border border-b-1 shadow-sm">
       <ul className="flex justify-between items-center p-2 max-w-5xl mx-auto">
         <li className="flex justify-center items-center gap-3">
-         {/* search btn */}
-         <button
+          {/* search btn */}
+          <button
             onClick={handleSearch}
             className="flex py-1 justify-center items-center rounded-full gap-3 p-1 bg-gradient-to-r from-teal-400 to-blue-500  text-white"
           >
@@ -37,12 +43,11 @@ export const Navbar = () => {
 
           <input
             type="text"
-            className="outline-none"
+            className="outline-none p-1 rounded-lg "
             placeholder="search blog activity..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          
         </li>
         {/* search */}
         {/*  */}
@@ -63,7 +68,7 @@ export const Navbar = () => {
             My Blog Channel
           </span>
         </Link>
-        <li className="flex justify-between items-center gap-3 -ml-8 text-sm">
+        <li className="flex justify-center items-center gap-3 -ml-8 text-sm">
           <Link
             to="/create"
             className="flex justify-center items-center rounded-xl gap-3 p-1 bg-gradient-to-r from-teal-400 to-blue-500  text-white"
@@ -85,22 +90,20 @@ export const Navbar = () => {
 
             <span className="md:block hidden">Create Blog</span>
           </Link>
-          <div className="w-8 flex">
+         
+            <div className="w-10 flex ">
             <img className="w-full rounded-full " src="/aa.jpg" alt="" />
-            {/* <div className="flex justify-end p-2">
+            <div className=" p-1">
               <select
-                // value={th}
-                // onChange={()=>  setTh(e.target.value)}
+                onChange={handleChangeTheme}
                 className="border p-1 rounded-md"
               >
-                <option value="light">
-                 Light
-                </option>
-                <option value="dark">Dark</option>
+                <option value="light" className="light">Light </option>
+                <option value="dark" className="dark">Dark </option>
+                <option value="coffee">Coffee</option>
               </select>
-            </div> */}
-          </div>
-          <div></div>
+            </div>
+          </div> 
         </li>
       </ul>
     </nav>
