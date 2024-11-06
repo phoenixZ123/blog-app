@@ -6,7 +6,7 @@ export const Home = () => {
   return (
     <div className="h-screen">
       {/* hero section  */}
-      <StartInfo />
+      {/* <StartInfo /> */}
 
       {/* blog sec */}
      <BlogList/>

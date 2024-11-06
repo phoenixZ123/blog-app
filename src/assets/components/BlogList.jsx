@@ -3,7 +3,6 @@ import bagan from "../assets/bagan.jpg";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { db } from "../firebase";
-import { auth } from "../firebase"; // Make sure to import auth from Firebase
 import {
   collection,
   deleteDoc,
@@ -12,9 +11,7 @@ import {
   onSnapshot,
   orderBy,
   query,
-  where,
 } from "firebase/firestore";
-
 export const BlogList = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
@@ -27,19 +24,9 @@ export const BlogList = () => {
     const fetchBlogs = async () => {
       setLoading(true);
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          setError("User not authenticated.");
-          setLoading(false);
-          return;
-        }
-
         const ref = collection(db, "blogs");
-        let q = query(
-          ref,
-          where("uid", "==", user.uid), // Filter by current user's uid
-          orderBy("date", "desc")
-        );
+        let q = query(ref, orderBy("date", "desc"));
+        const docs = await getDocs(q);
 
         onSnapshot(q, (docs) => {
           if (docs.empty) {
@@ -52,10 +39,10 @@ export const BlogList = () => {
             setBlogs(blogsArray);
             setError("");
           }
-          setLoading(false);
         });
       } catch (err) {
         setError("Failed to load blogs.");
+      } finally {
         setLoading(false);
       }
     };
@@ -75,15 +62,15 @@ export const BlogList = () => {
       item.recommand.toLowerCase().includes(search.toLowerCase())
   );
 
-  const deleteBlog = async (e, id) => {
+  let deleteBlog = async (e, id) => {
     e.preventDefault();
-    const ref = doc(db, "blogs", id);
+    let ref = doc(db, "blogs", id);
     await deleteDoc(ref);
+    //no need when use onSnapShot realtime method
+    // setBlogs((prev) => prev.filter((b) => b.id !== id));
   };
-
-  
   return (
-    <div className="p-4 h-full ">
+    <div className="p-4 ">
       {loading && <p>Loading ...</p>}
       {!!filteredData.length ? (
         <motion.div
@@ -114,8 +101,8 @@ export const BlogList = () => {
                     <p className="text-gray-700 text-sm mt-2 truncate">
                       {item.recommand}
                     </p>
-                    <div className="flex flex-col md:flex-row md:justify-between items-center mt-3 w-full space-y-2 md:space-y-0 md:space-x-5">
-                      <div className="rating flex">
+                    <div className="flex justify-between items-center mt-3 w-full">
+                      <div className="rating">
                         {[...Array(5)].map((_, index) => (
                           <input
                             key={index}
@@ -126,11 +113,10 @@ export const BlogList = () => {
                           />
                         ))}
                       </div>
-                      <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                      <span className="bg-blue-600 text-white  px-2 py-1 rounded text-xs">
                         {item.category_name}
                       </span>
                     </div>
-
                     <div className="flex justify-end space-x-2 mt-2  w-full items-center ">
                       <Link to={`/edit/${item.id}`}>
                         <svg

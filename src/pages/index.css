@@ -1,0 +1,176 @@
+/* Register form container */
+.register-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background: linear-gradient(to right, #4bc0c8, #c779d0, #feac5e);
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Title styling */
+  .register-title {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 20px;
+  }
+  
+  /* Form styling */
+  .register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  label {
+    font-size: 1rem;
+    color: #ffffff;
+    margin-bottom: 5px;
+  }
+  
+  input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  
+  input:focus {
+    border-color: #a511b6;
+  }
+  
+  /* Error styling */
+  .input-error {
+    border-color: #e05a5a;
+  }
+  
+  .error {
+    font-size: 0.8rem;
+    color: #e33636;
+    margin-top: 5px;
+  }
+  
+  /* Button styling */
+  .register-button {
+    padding: 10px;
+    background: #1f8991;
+    border: none;
+    border-radius: 5px;
+    color: #ffffff95;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+ /* Login.css */
+/* Basic reset and container styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+
+.login-container {
+  width: 400px;
+  height: max-content;
+  padding: 2rem;
+  border-radius: 8px;
+  /* background-color: #fff; */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.119);
+  animation: fadeIn 0.8s ease-out;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  color: #727272;
+  margin-bottom: 1.5rem;
+}
+
+/* Input Group Styling */
+.input-group {
+  margin-bottom: 1.2rem;
+  text-align: left;
+}
+
+.input-group label {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-group input:focus {
+  border-color: #4A90E2;
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.2);
+  outline: none;
+}
+
+/* Button Styling with Icon */
+.login-button {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #4A90E2;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.login-button:hover {
+  background-color: #357ABD;
+}
+
+.icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease-in-out;
+}
+
+.login-button:hover .icon {
+  transform: rotate(20deg);
+}
+
+/* Animation for Fade-in Effect */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error message styles (if needed) */
+.error {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+  text-align: left;
+}

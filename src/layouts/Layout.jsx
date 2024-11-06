@@ -20,7 +20,7 @@ export const Layout = () => {
           key={location.pathname}
           nodeRef={nodeRef}
         >
-          <div className="max-w-5xl mx-auto p-2" ref={nodeRef}>
+          <div className="max-w-5xl mx-auto p-2 " ref={nodeRef}>
             <Outlet />
           </div>
         </CSSTransition>

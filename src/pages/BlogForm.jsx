@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useFetch } from "../hooks/useFetch";
 import { useNavigate, useParams } from "react-router-dom";
 import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { AuthContext } from "../contexts/AuthContext";
 // import { db, storage } from "../firebase"; // Ensure Firebase storage is configured
 // import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -17,6 +18,7 @@ export const BlogForm = () => {
   let [loading, setLoading] = useState(false);
   let [isedit, setisEdit] = useState(false);
   let [category, setCategory] = useState("");
+  let[preview,setPreview]=useState("");
   let { id } = useParams();
   // const {
   //   data: category,
@@ -30,6 +32,22 @@ export const BlogForm = () => {
     setImageFile(e.target.files[0]);
   };
 
+  let handlePreviewImage=(file)=>{
+    let reader=new FileReader;
+    reader.readAsDataURL(file);
+    reader.onload=()=>{
+      setPreview(reader.result);
+    }
+  }
+
+  useEffect(()=>{
+if(imageFile){
+  handlePreviewImage(imageFile);
+}
+  },[imageFile]);
+
+
+let {user}=useContext(AuthContext);
   let submitForm = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -40,6 +58,7 @@ export const BlogForm = () => {
         rating,
         date: date || new Date().toISOString(),
         category_name: selectedCategory,
+        uid:user.uid
       };
 
       console.log("New Blog Data:", newBlogData);
@@ -120,8 +139,8 @@ export const BlogForm = () => {
     <>
       {/* {categoryError && <p>{categoryError} To Category</p>} */}
       {/* {loading && <p>Loading...</p>} */}
-      <div className="h-screen">
-        <form className="w-full max-w-lg mx-auto mt-5" onSubmit={submitForm}>
+      <div className="h-[800px]">
+        <form className="w-full  max-w-lg mx-auto mt-5" onSubmit={submitForm}>
           <div className="flex flex-wrap -mx-3 mb-6 ">
             <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
               <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
@@ -203,16 +222,16 @@ export const BlogForm = () => {
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
-            <div className="w-full md:w-1/3 px-3 mb-6 md:mb-0">
+            <div className="w-full md:w-2/3 px-3 mb-6 md:mb-0 ">
               <label className="block text-sm font-medium text-gray-700 mt-4">
                 Upload an image:
               </label>
               <input
                 type="file"
-                accept="image/*"
                 onChange={handleImageChange}
                 className="mt-1 block w-full text-sm text-gray-500"
               />
+              {preview ? <img src={preview} alt="" className="h-32 p-1"/> : ""}
             </div>
           </div>
           <button
