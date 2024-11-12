@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../pages/index.css";
 import { useSignUp } from "../hooks/useSignUp";
 import { useNavigate } from "react-router-dom";
+import { getFirestore, collection, addDoc } from "firebase/firestore"; // Import Firestore methods
 
 export const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +13,10 @@ export const RegisterForm = () => {
 
   const { error, loading, signUp } = useSignUp(); // Destructure properly from the hook
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate(); // Navigate hook for redirection
+  const db = getFirestore(); // Initialize Firestore
 
+  // Handle form field changes
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -20,6 +24,7 @@ export const RegisterForm = () => {
     });
   };
 
+  // Validate form data
   const validateForm = () => {
     const newErrors = {};
     if (!formData.username) newErrors.username = "Username is required";
@@ -33,15 +38,35 @@ export const RegisterForm = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
-let navigate=useNavigate();
+
+  // Handle form submission
   const signupForm = async (e) => {
     e.preventDefault();
     if (validateForm()) {
       console.log("Form submitted:", formData);
       const { email, password, username } = formData;
-      let res = await signUp(username, email, password);
-      navigate("/login");
+
+      try {
+        // Sign up the user using the signUp hook (this assumes the hook handles Firebase Auth)
+         signUp(username, email, password);
+
+        // Create a new user object to save to Firestore
+        const newUser = {
+          username,
+          email,
+          password,
+        };
+
+        const ref = collection(db, "users");
+        await addDoc(ref, newUser); // This adds the user data to Firestore
+
+        navigate("/login");
+      } catch (error) {
+        console.error("Error signing up or saving user data:", error);
+      }
     }
+    
+
   };
 
   return (

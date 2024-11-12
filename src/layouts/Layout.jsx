@@ -11,7 +11,7 @@ export const Layout = () => {
   let { theme, changeTheme } = useTheme();
   // console.log(theme);
   return (
-    <div data-theme={`${theme}`} >
+    <div data-theme={`${theme}`} className="overflow-y-auto">
       <Navbar />
       <SwitchTransition>
         <CSSTransition

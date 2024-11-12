@@ -2,72 +2,80 @@ import React, { useEffect, useState } from "react";
 import bagan from "../assets/bagan.jpg";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { db } from "../firebase";
-import { auth } from "../firebase"; // Make sure to import auth from Firebase
+import { db, auth } from "../firebase"; // Ensure auth is imported from Firebase
 import {
   collection,
   deleteDoc,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
-  where,
 } from "firebase/firestore";
 
 export const BlogList = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
+
   const [error, setError] = useState("");
   const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+
+  const fetchUser = () => {
+    const ref = collection(db, "users");
+    const q = query(ref);
+
+    onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setError("No users found.");
+        setUsers([]);
+      } else {
+        const userArray = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(userArray);
+        setError("");
+      }
+      setLoading(false);
+    });
+  };
+
+  const fetchBlogs = () => {
+    const ref = collection(db, "blogs");
+    const q = query(ref, orderBy("date", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setError("No blogs found.");
+        setBlogs([]);
+      } else {
+        const blogsArray = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setBlogs(blogsArray);
+        setError("");
+      }
+      setLoading(false);
+    });
+  };
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      setLoading(true);
-      try {
-        const user = auth.currentUser;
-        if (!user) {
-          setError("User not authenticated.");
-          setLoading(false);
-          return;
-        }
+    const user = auth.currentUser;
 
-        const ref = collection(db, "blogs");
-        let q = query(
-          ref,
-          where("uid", "==", user.uid), // Filter by current user's uid
-          orderBy("date", "desc")
-        );
-
-        onSnapshot(q, (docs) => {
-          if (docs.empty) {
-            setError("No blogs found.");
-          } else {
-            const blogsArray = docs.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-            setBlogs(blogsArray);
-            setError("");
-          }
-          setLoading(false);
-        });
-      } catch (err) {
-        setError("Failed to load blogs.");
-        setLoading(false);
-      }
-    };
-
+    if (!user) {
+      setError("User not authenticated.");
+      setLoading(false);
+      return;
+    }
+    fetchUser();
     fetchBlogs();
   }, []);
 
-  if (error) {
-    return <p className="text-center text-red-500">{error}</p>;
-  }
+  if (error) return <p className="text-center text-red-500">{error}</p>;
 
-  // Filter blogs based on search query
   const filteredData = blogs.filter(
     (item) =>
       item.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -77,14 +85,25 @@ export const BlogList = () => {
 
   const deleteBlog = async (e, id) => {
     e.preventDefault();
-    const ref = doc(db, "blogs", id);
-    await deleteDoc(ref);
+    try {
+      await deleteDoc(doc(db, "blogs", id));
+    } catch (err) {
+      setError("Failed to delete blog.");
+    }
   };
 
-  
   return (
-    <div className="p-4 h-full ">
+    <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
+      {/* <ul>
+        <h3>User List</h3>
+        {users.map((user) => (
+          <li key={user.id}>
+            <p>Name: {user.username}</p>
+            <p>Email: {user.email}</p>
+          </li>
+        ))}
+      </ul> */}
       {!!filteredData.length ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -97,7 +116,6 @@ export const BlogList = () => {
                 <motion.button
                   whileHover={{
                     scale: 1.05,
-                    // textShadow: "0px 0px 5px rgb(255,255,255)",
                   }}
                   className="w-full"
                 >
@@ -110,7 +128,6 @@ export const BlogList = () => {
                           : "No date"}
                       </span>
                     </div>
-                    <img src={bagan} alt="Blog" className="w-full rounded-md" />
                     <p className="text-gray-700 text-sm mt-2 truncate">
                       {item.recommand}
                     </p>
@@ -130,8 +147,7 @@ export const BlogList = () => {
                         {item.category_name}
                       </span>
                     </div>
-
-                    <div className="flex justify-end space-x-2 mt-2  w-full items-center ">
+                    <div className="flex justify-end space-x-2 mt-2 w-full items-center">
                       <Link to={`/edit/${item.id}`}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -148,7 +164,6 @@ export const BlogList = () => {
                           />
                         </svg>
                       </Link>
-
                       <div onClick={(e) => deleteBlog(e, item.id)}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -161,7 +176,7 @@ export const BlogList = () => {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.021-2.09 2.201v.916m7.5 0a48.268 48.268 0 0 0-7.5 0"
                           />
                         </svg>
                       </div>
@@ -173,9 +188,7 @@ export const BlogList = () => {
           </div>
         </motion.div>
       ) : (
-        <p className="text-center text-gray-500 text-xl">
-          No blogs match your search criteria.
-        </p>
+        <p>No blogs found.</p>
       )}
     </div>
   );

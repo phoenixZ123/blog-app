@@ -37,17 +37,17 @@ export const BlogDetail = () => {
   }, [id]);
 
   return (
-    <div className="h-screen">
+    <div className="h-screen flex ">
       {error && <p>{error}</p>}
       {loading && <p>Loading ...</p>}
       {blog && (
-        <div className="grid md:grid-cols-2 grid-cols-1 md:mt-10" key={blog.id}>
+        <div className="md:mt-10 justify-center mx-auto " key={blog.id}>
           <div className="md:mt-3 text-wrap text-lg p-2">
             <p>{blog.category_name}</p>
             <p className="p-2 m-2 text-2xl text-center font-semibold">
               {blog.title}
             </p>
-            <p className="indent-8 mt-3">{blog.recommend}</p>
+            <p className="indent-8 mt-3">{blog.recommand}</p>
             <div className="flex justify-between">
               <div className="rating mt-5 space-x-2 w-full flex justify-between items-center">
                 <div className="flex items-center gap-3">
@@ -73,9 +73,9 @@ export const BlogDetail = () => {
               </div>
             </div>
           </div>
-          <div>
+          {/* <div>
             <img src={blog.image} className="md:h-full" alt={`${blog.title} image`} />
-          </div>
+          </div> */}
         </div>
       )}
     </div>

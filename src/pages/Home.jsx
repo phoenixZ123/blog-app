@@ -4,7 +4,7 @@ import { BlogList } from "../components/BlogList";
 // import "./dist/main.css";
 export const Home = () => {
   return (
-    <div className="h-screen">
+    <div className="h-screen overflow-y-auto">
       {/* hero section  */}
       {/* <StartInfo /> */}
 

@@ -6,10 +6,11 @@ import { Layout } from "../layouts/Layout.jsx";
 import { Search } from "../pages/Search.jsx";
 import { BlogDetail } from "../components/BlogDetail.jsx";
 import { BlogForm } from "../pages/BlogForm.jsx";
-import { RegisterForm } from "../pages/register.jsx";
+import { RegisterForm } from "../pages/Register.jsx";
 import { LoginForm } from "../pages/Login.jsx";
 import { useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext.jsx";
+import { Profile } from "../pages/Profile.jsx";
 
 export default function index() {
   let { authReady, user } = useContext(AuthContext);
@@ -36,9 +37,10 @@ export default function index() {
           path: "/edit/:id",
           element: authenticated ? <BlogForm /> : <Navigate to="/login" />,
         },
+        
         {
-          path: "/search",
-          element: <Search />,
+          path: "/profile",
+          element: authenticated ? <Profile /> : <Navigate to="/login" />,
         },
         {
           path: "/register",
@@ -46,7 +48,7 @@ export default function index() {
         },
         {
           path: "/login",
-        element:!authenticated ? <LoginForm /> : <Navigate to="/" />,
+        element:<LoginForm /> ,
         },
       ],
     },
