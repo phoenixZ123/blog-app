@@ -10,27 +10,27 @@ import {
   onSnapshot,
   orderBy,
   query,
+  where,
 } from "firebase/firestore";
 
 export const BlogList = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
+  const userName = params.get("username") || "";
 
   const [error, setError] = useState("");
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
 
+ if(userName){
   const fetchUser = () => {
     const ref = collection(db, "users");
-    const q = query(ref);
+    const q = query(ref,where("username","==",userName));
 
     onSnapshot(q, (snapshot) => {
-      if (snapshot.empty) {
-        setError("No users found.");
-        setUsers([]);
-      } else {
+     
         const userArray = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -38,9 +38,10 @@ export const BlogList = () => {
         setUsers(userArray);
         setError("");
       }
-      setLoading(false);
-    });
+    );
   };
+  fetchUser();
+ }
 
   const fetchBlogs = () => {
     const ref = collection(db, "blogs");
@@ -63,6 +64,8 @@ export const BlogList = () => {
   };
 
   useEffect(() => {
+    fetchBlogs();
+
     const user = auth.currentUser;
 
     if (!user) {
@@ -70,8 +73,10 @@ export const BlogList = () => {
       setLoading(false);
       return;
     }
-    fetchUser();
-    fetchBlogs();
+    // fetchUser();
+    // if(!userName){
+    //   setUsers([]);
+    // }
   }, []);
 
   if (error) return <p className="text-center text-red-500">{error}</p>;
@@ -95,15 +100,15 @@ export const BlogList = () => {
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
-      {/* <ul>
+       <ul>
         <h3>User List</h3>
-        {users.map((user) => (
+        {userName && users.map((user) => (
           <li key={user.id}>
             <p>Name: {user.username}</p>
             <p>Email: {user.email}</p>
           </li>
         ))}
-      </ul> */}
+      </ul> 
       {!!filteredData.length ? (
         <motion.div
           initial={{ opacity: 0 }}
