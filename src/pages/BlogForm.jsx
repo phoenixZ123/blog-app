@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { AuthContext } from "../contexts/AuthContext";
+import { useSignIn } from "../hooks/useSignIn";
 // import { db, storage } from "../firebase"; // Ensure Firebase storage is configured
 // import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -48,6 +49,7 @@ if(imageFile){
 
 
 let {user}=useContext(AuthContext);
+
   let submitForm = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -58,10 +60,9 @@ let {user}=useContext(AuthContext);
         rating,
         date: date || new Date().toISOString(),
         category_name: selectedCategory,
-        uid:user.uid
+        // uid:user.uid,
+        email:user.email
       };
-
-      console.log("New Blog Data:", newBlogData);
 
       if (isedit) {
         let ref=doc(db,"blogs",id);
@@ -70,7 +71,7 @@ let {user}=useContext(AuthContext);
         const ref = collection(db, "blogs");
         await addDoc(ref, newBlogData);
       }
-      navigate("/");
+      navigate("/profile");
     } catch (error) {
       console.error("Error adding blog:", error);
       setError("Failed to add blog. Please try again.");

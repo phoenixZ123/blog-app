@@ -3,6 +3,7 @@ import "../pages/index.css";
 import { useSignUp } from "../hooks/useSignUp";
 import { useNavigate } from "react-router-dom";
 import { getFirestore, collection, addDoc } from "firebase/firestore"; // Import Firestore methods
+import { auth } from "../firebase";
 
 export const RegisterForm = () => {
   const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ export const RegisterForm = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
-
+// let {user}=auth();
   // Handle form submission
   const signupForm = async (e) => {
     e.preventDefault();
@@ -55,6 +56,7 @@ export const RegisterForm = () => {
           username,
           email,
           password,
+          // uid:user.uid
         };
 
         const ref = collection(db, "users");

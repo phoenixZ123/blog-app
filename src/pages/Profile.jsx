@@ -110,7 +110,7 @@ export const Profile = () => {
       const ref = collection(db, "blogs");
       let q = query(
         ref,
-        where("uid", "==", user.uid),
+        where("email", "==", user.email),
         orderBy("rating", "desc"),
         orderBy("date", "desc")
       );
@@ -146,7 +146,7 @@ export const Profile = () => {
       const ref = collection(db, "blogs");
       let q = query(
         ref,
-        where("uid", "==", currentUser.uid),
+        where("email", "==", currentUser.email),
         orderBy("rating", "desc"),
         orderBy("date", "desc")
       );
@@ -192,7 +192,7 @@ const handleMonthChange=()=>{
     const ref = collection(db, "blogs");
     let q = query(
       ref,
-      where("uid", "==", currentUser.uid),
+      where("email", "==", currentUser.email),
       orderBy("rating", "desc"),
       orderBy("date", "desc")
     );
@@ -200,7 +200,7 @@ const handleMonthChange=()=>{
     if (month) {
       q = query(
         ref,
-        where("uid", "==", currentUser.uid),
+        where("email", "==", currentUser.email),
         where("month", "==", selectedMonth),
         orderBy("rating", "desc")
       );
@@ -385,7 +385,7 @@ const handleMonthChange=()=>{
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.8 }}
-              className=" grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-3 mx-auto max-w-4xl"
+              className=" grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4  gap-4 my-3 mx-auto max-w-5xl"
             >
               {filteredData.map((item) => (
                 <Link to={`/blogs/${item.id}`} key={item.id}>

@@ -7,6 +7,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -24,13 +25,14 @@ export const BlogList = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
 
- if(userName){
   const fetchUser = () => {
     const ref = collection(db, "users");
-    const q = query(ref,where("username","==",userName));
-
+    const q = query(ref, where("username", "==", userName));
     onSnapshot(q, (snapshot) => {
-     
+      if (snapshot.empty) {
+        setError("No users found.");
+        setUsers([]);
+      } else {
         const userArray = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -38,24 +40,45 @@ export const BlogList = () => {
         setUsers(userArray);
         setError("");
       }
-    );
+    });
   };
-  fetchUser();
- }
 
+  if (userName) {
+    fetchUser();
+  }
   const fetchBlogs = () => {
     const ref = collection(db, "blogs");
     const q = query(ref, orderBy("date", "desc"));
 
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(q, async (snapshot) => {
       if (snapshot.empty) {
         setError("No blogs found.");
         setBlogs([]);
       } else {
-        const blogsArray = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const blogsArray = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const blogData = doc.data();
+            const blogEmail = blogData.email;
+
+            // Fetch username from the users collection based on the blog's email
+            const userRef = collection(db, "users");
+            const userQuery = query(userRef, where("email", "==", blogEmail));
+            const userSnapshot = await getDocs(userQuery);
+
+            let username = "Unknown User"; 
+            if (!userSnapshot.empty) {
+              // username from users
+              const userDoc = userSnapshot.docs[0].data();
+              username = userDoc.username; 
+            }
+
+            return {
+              id: doc.id,
+              ...blogData,
+              username, // Add username to the blog object
+            };
+          })
+        );
         setBlogs(blogsArray);
         setError("");
       }
@@ -73,11 +96,8 @@ export const BlogList = () => {
       setLoading(false);
       return;
     }
-    // fetchUser();
-    // if(!userName){
-    //   setUsers([]);
-    // }
-  }, []);
+    setError("");
+  }, [userName]);
 
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
@@ -87,7 +107,9 @@ export const BlogList = () => {
       item.category_name.toLowerCase().includes(search.toLowerCase()) ||
       item.recommand.toLowerCase().includes(search.toLowerCase())
   );
-
+  const filterUser = users.filter((item) =>
+    item.username.toLowerCase().includes(userName.toLowerCase())
+  );
   const deleteBlog = async (e, id) => {
     e.preventDefault();
     try {
@@ -100,15 +122,17 @@ export const BlogList = () => {
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
-       <ul>
-        <h3>User List</h3>
-        {userName && users.map((user) => (
-          <li key={user.id}>
-            <p>Name: {user.username}</p>
-            <p>Email: {user.email}</p>
-          </li>
-        ))}
-      </ul> 
+      <ul className="flex">
+        {userName &&
+          filterUser.map((user) => (
+            <div>
+              <li key={user.id}>
+                <p>Name: {user.username}</p>
+                <p>Email: {user.email}</p>
+              </li>
+            </div>
+          ))}
+      </ul>
       {!!filteredData.length ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -125,14 +149,16 @@ export const BlogList = () => {
                   className="w-full"
                 >
                   <div className="p-2 rounded-lg shadow-md border border-1 m-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-lg font-semibold">{item.title}</h3>
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-lg font-semibold">{item.title} </div>
+
                       <span className="text-gray-500 text-sm">
                         {item.date
                           ? new Date(item.date).toLocaleDateString()
                           : "No date"}
                       </span>
                     </div>
+                    <div>Author: {item.username}</div>
                     <p className="text-gray-700 text-sm mt-2 truncate">
                       {item.recommand}
                     </p>
