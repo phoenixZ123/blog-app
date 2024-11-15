@@ -14,6 +14,7 @@ export const LoginForm = () => {
     e.preventDefault();
     const user = await signIn(email, password); // Use email and password
     if (user) {
+      console.log(user.uid);
       navigate("/");
       console.log("Email:", email, "Password:", password);
     }

@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import bagan from "../assets/bagan.jpg";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { db, auth } from "../firebase"; // Ensure auth is imported from Firebase
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -13,17 +14,19 @@ import {
   query,
   where,
 } from "firebase/firestore";
+import { AuthContext } from "../contexts/AuthContext";
+import { Alert, Button } from "@material-tailwind/react";
 
 export const BlogList = () => {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const search = params.get("search") || "";
   const userName = params.get("username") || "";
-
   const [error, setError] = useState("");
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
+  let [find, setFind] = useState([]);
 
   const fetchUser = () => {
     const ref = collection(db, "users");
@@ -39,13 +42,32 @@ export const BlogList = () => {
         }));
         setUsers(userArray);
         setError("");
+        //
+        const userEmail = userArray[0].email;
+        fetchBlogsByUserEmail(userEmail);
+        //
       }
     });
   };
+  //
+  const fetchBlogsByUserEmail = async (email) => {
+    try {
+      const blogsRef = collection(db, "blogs");
+      const blogsQuery = query(blogsRef, where("email", "==", email));
 
-  if (userName) {
-    fetchUser();
-  }
+      const blogsSnapshot = await getDocs(blogsQuery);
+      const blogsArray = blogsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setFind(blogsArray);
+    } catch (err) {
+      setError("Error fetching blogs by user email.");
+    }
+  };
+  //
+
   const fetchBlogs = () => {
     const ref = collection(db, "blogs");
     const q = query(ref, orderBy("date", "desc"));
@@ -65,11 +87,11 @@ export const BlogList = () => {
             const userQuery = query(userRef, where("email", "==", blogEmail));
             const userSnapshot = await getDocs(userQuery);
 
-            let username = "Unknown User"; 
+            let username = "Unknown User";
             if (!userSnapshot.empty) {
               // username from users
               const userDoc = userSnapshot.docs[0].data();
-              username = userDoc.username; 
+              username = userDoc.username;
             }
 
             return {
@@ -85,11 +107,78 @@ export const BlogList = () => {
       setLoading(false);
     });
   };
+  //     const blogsRef = collection(db, "blogs");
+  //     let blogsQuery;
 
+  //     if (userName) {
+  //       // Fetch blogs by the specified username
+  //       const userRef = collection(db, "users");
+  //       const userQuery = query(userRef, where("username", "==", userName));
+  //       const userSnapshot = getDocs(userQuery);
+
+  //       if (userSnapshot.empty) {
+  //         setError(`No blogs found for user: ${userName}`);
+  //         setBlogs([]);
+  //       } else {
+  //         const userEmail = userSnapshot.docs[0].data().email;
+  //         blogsQuery = query(
+  //           blogsRef,
+  //           where("email", "==", userEmail),
+  //           orderBy("date", "desc")
+  //         );
+  //       }
+  //     } else {
+  //       // Fetch all blogs
+  //       blogsQuery = query(blogsRef, orderBy("date", "desc"));
+  //     }
+
+  //     if (blogsQuery) {
+  //       const snapshot = await getDocs(blogsQuery);
+  //       if (snapshot.empty) {
+  //         setError("No blogs found.");
+  //         setBlogs([]);
+  //       } else {
+  //         const blogsArray = snapshot.docs.map((doc) => ({
+  //           id: doc.id,
+  //           ...doc.data(),
+  //         }));
+  //         setBlogs(blogsArray);
+  //         setError("");
+  //       }
+  //     }
+  //   } catch (err) {
+  //     setError("Error fetching blogs.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const user = auth.currentUser;
+  const filterUser = users.filter((item) =>
+    item.username.toLowerCase().includes(userName.toLowerCase())
+  );
+  const email = filterUser[0]?.email;
   useEffect(() => {
+    if (userName) {
+      fetchUser();
+    }
+    const ref = collection(db, "follower");
+    // Check if the follower relationship already exists
+    onSnapshot(query(ref), (snapshot) => {
+      if (snapshot.empty) {
+        setError("No users found.");
+        setUsers([]);
+        setFollowed(false);
+      } else {
+        // Use `some` to check if there is a match, then set `setFollowed`
+        const isFollowed = snapshot.docs.some(
+          (doc) =>
+            doc.data().user_email === email &&
+            doc.data().follower_email === user.email
+        );
+        setFollowed(isFollowed);
+      }
+    });
     fetchBlogs();
-
-    const user = auth.currentUser;
 
     if (!user) {
       setError("User not authenticated.");
@@ -97,8 +186,45 @@ export const BlogList = () => {
       return;
     }
     setError("");
-  }, [userName]);
+  }, [userName,user,email]);
 
+  
+  let [followed, setFollowed] = useState(false);
+  const handleFollow = async (e) => {
+    e.preventDefault();
+  
+    // Extract the first email from filterUser, assuming it's an array of objects
+    const email = filterUser[0]?.email;
+  
+    const newFollower = {
+      user_email: email,
+      follower_email: user.email,
+    };
+  
+    const ref = collection(db, "follower");
+  
+    // Check if the follower relationship already exists
+    onSnapshot(query(ref), (snapshot) => {
+      if (snapshot.empty) {
+        setError("No users found.");
+        setUsers([]);
+        setFollowed(false);
+      } else {
+        // Use `some` to check if there is a match, then set `setFollowed`
+        const isFollowed = snapshot.docs.some(
+          (doc) =>
+            doc.data().user_email === email &&
+            doc.data().follower_email === user.email
+        );
+        setFollowed(isFollowed);
+      }
+    });
+  
+    // Add the new follower if not already followed
+    if (!isFollowed) {
+      await addDoc(ref, newFollower);
+    }
+  };
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
   const filteredData = blogs.filter(
@@ -107,9 +233,7 @@ export const BlogList = () => {
       item.category_name.toLowerCase().includes(search.toLowerCase()) ||
       item.recommand.toLowerCase().includes(search.toLowerCase())
   );
-  const filterUser = users.filter((item) =>
-    item.username.toLowerCase().includes(userName.toLowerCase())
-  );
+  
   const deleteBlog = async (e, id) => {
     e.preventDefault();
     try {
@@ -118,19 +242,78 @@ export const BlogList = () => {
       setError("Failed to delete blog.");
     }
   };
-
+  
+  
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
-      <ul className="flex">
+      <ul className="flex justify-center mt-3">
         {userName &&
           filterUser.map((user) => (
-            <div>
-              <li key={user.id}>
-                <p>Name: {user.username}</p>
-                <p>Email: {user.email}</p>
-              </li>
-            </div>
+            <li
+              key={user.id}
+              className="md:max-w-3xl p-3  rounded-lg shadow-lg border border-gray-200 m-2"
+            >
+              <button
+                onClick={handleFollow}
+                className="hover:text-primary active:text-white flex justify-center items-center p-1 hover:bg-indigo-400 rounded-md text-white bg-indigo-500"
+              >{followed ? <div>Followed</div> : <><div>Follow</div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="size-5 mt-1"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg></>}
+                
+              </button>
+              <div className="text-center mb-4">
+                <div className="w-24 h-24 mx-auto rounded-full bg-blue-200 flex items-center justify-center text-4xl text-blue-700 font-bold uppercase">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="size-8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className=" text-xl font-semibold text-gray-800">
+                  <div>{user.username} </div>
+                </div>
+                <p className="text-gray-500 mt-2 mb-4">Contact: {user.email}</p>
+                <p className="text-gray-600">
+                  Welcome to {user.username}'s profile! Explore blogs by this
+                  user below.
+                </p>
+              </div>
+              <div className="flex justify-center items-center">
+                {" "}
+                {find &&
+                  find.map((data) => (
+                    <ul key={data.id}>
+                      <li className="flex justify-center items-center bg-primary text-white opacity-[0.8] p-2 w-32 text-wrap m-2 rounded-lg">
+                        {data.category_name}
+                      </li>
+                    </ul>
+                  ))}{" "}
+              </div>
+            </li>
           ))}
       </ul>
       {!!filteredData.length ? (

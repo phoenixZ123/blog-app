@@ -103,8 +103,8 @@
   "follower": [
     {
       "id": "1",
-      "user_id": 1,
-      "follower_id": "Travel"
+      "user_email": "zann@gmail.com",
+      "follower_email": "phuephue1125@gmail.com"
     }
   ], "comment": [
     {

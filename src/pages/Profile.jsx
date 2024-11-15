@@ -23,7 +23,7 @@ export const Profile = () => {
   let [error, setError] = useState("");
   let location = useLocation();
   // let [date, setDate] = useState("");
-  let[month,setMonth]=useState("");
+  let [month, setMonth] = useState("");
   const params = new URLSearchParams(location.search);
   const searchData = params.get("search") || "";
   let [ratingFilter, setRatingFilter] = useState("");
@@ -179,52 +179,52 @@ export const Profile = () => {
     }
     navigate("/profile");
   };
-const handleMonthChange=()=>{
-  setLoading(true);
-  try {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      setError("User not authenticated.");
-      setLoading(false);
-      return;
-    }
+  const handleMonthChange = () => {
+    setLoading(true);
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError("User not authenticated.");
+        setLoading(false);
+        return;
+      }
 
-    const ref = collection(db, "blogs");
-    let q = query(
-      ref,
-      where("email", "==", currentUser.email),
-      orderBy("rating", "desc"),
-      orderBy("date", "desc")
-    );
-    const selectedMonth = month;
-    if (month) {
-      q = query(
+      const ref = collection(db, "blogs");
+      let q = query(
         ref,
         where("email", "==", currentUser.email),
-        where("month", "==", selectedMonth),
-        orderBy("rating", "desc")
+        orderBy("rating", "desc"),
+        orderBy("date", "desc")
       );
-    }
-
-    onSnapshot(q, (docs) => {
-      if (docs.empty) {
-        setError("No blogs found.");
-      } else {
-        const blogsArray = docs.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setBlogs(blogsArray);
-        setError("");
+      const selectedMonth = month;
+      if (month) {
+        q = query(
+          ref,
+          where("email", "==", currentUser.email),
+          where("month", "==", selectedMonth),
+          orderBy("rating", "desc")
+        );
       }
+
+      onSnapshot(q, (docs) => {
+        if (docs.empty) {
+          setError("No blogs found.");
+        } else {
+          const blogsArray = docs.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          setBlogs(blogsArray);
+          setError("");
+        }
+        setLoading(false);
+      });
+    } catch (e) {
+      setError("Failed to load blogs.");
       setLoading(false);
-    });
-  } catch (e) {
-    setError("Failed to load blogs.");
-    setLoading(false);
-  }
-  navigate("/profile");
-}
+    }
+    navigate("/profile");
+  };
   const AllBlogs = () => {
     setLoading(true);
     try {
@@ -238,7 +238,7 @@ const handleMonthChange=()=>{
       const ref = collection(db, "blogs");
       let q = query(
         ref,
-        where("uid", "==", currentUser.uid),
+        where("email", "==", currentUser.email),
         orderBy("rating", "desc"),
         orderBy("date", "desc")
       );
@@ -309,13 +309,10 @@ const handleMonthChange=()=>{
         {/* Blog Interaction Buttons */}
         <div className="w-full flex justify-center space-x-5 p-3">
           <button className="bg-blue-500 text-white py-1 px-4 rounded">
-            Like
-          </button>
-          <button className="bg-blue-500 text-white py-1 px-4 rounded">
-            Comment
-          </button>
-          <button className="bg-blue-500 text-white py-1 px-4 rounded">
             Follower
+          </button>
+          <button className="bg-blue-500 text-white py-1 px-4 rounded">
+            Following 
           </button>
         </div>
 
@@ -354,28 +351,27 @@ const handleMonthChange=()=>{
         </button> */}
           <label htmlFor="month">Select Month:</label>
           <button onClick={handleMonthChange}>
-          <select
-        id="month"
-        value={month}
-        onChange={(e) => setMonth(e.target.value)}
-        required
-      >
-        <option value="">--Select Month--</option>
-        <option value="1">January</option>
-        <option value="2">February</option>
-        <option value="3">March</option>
-        <option value="4">April</option>
-        <option value="5">May</option>
-        <option value="6">June</option>
-        <option value="7">July</option>
-        <option value="8">August</option>
-        <option value="9">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
-      </select>
+            <select
+              id="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              required
+            >
+              <option value="">--Select Month--</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
           </button>
-      
         </div>
 
         {/* Your Blogs */}
