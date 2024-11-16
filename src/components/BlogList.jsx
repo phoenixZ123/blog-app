@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import bagan from "../assets/bagan.jpg";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { db, auth } from "../firebase"; // Ensure auth is imported from Firebase
 import {
@@ -27,7 +27,8 @@ export const BlogList = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   let [find, setFind] = useState([]);
-
+  const user = auth.currentUser;
+  let navigate=useNavigate();
   const fetchUser = () => {
     const ref = collection(db, "users");
     const q = query(ref, where("username", "==", userName));
@@ -44,6 +45,11 @@ export const BlogList = () => {
         setError("");
         //
         const userEmail = userArray[0].email;
+        if(user.email ===userEmail){
+          setError("User Already Has Been Authenticated");
+          setUsers([]);
+          navigate("/");
+        }
         fetchBlogsByUserEmail(userEmail);
         //
       }
@@ -107,52 +113,8 @@ export const BlogList = () => {
       setLoading(false);
     });
   };
-  //     const blogsRef = collection(db, "blogs");
-  //     let blogsQuery;
-
-  //     if (userName) {
-  //       // Fetch blogs by the specified username
-  //       const userRef = collection(db, "users");
-  //       const userQuery = query(userRef, where("username", "==", userName));
-  //       const userSnapshot = getDocs(userQuery);
-
-  //       if (userSnapshot.empty) {
-  //         setError(`No blogs found for user: ${userName}`);
-  //         setBlogs([]);
-  //       } else {
-  //         const userEmail = userSnapshot.docs[0].data().email;
-  //         blogsQuery = query(
-  //           blogsRef,
-  //           where("email", "==", userEmail),
-  //           orderBy("date", "desc")
-  //         );
-  //       }
-  //     } else {
-  //       // Fetch all blogs
-  //       blogsQuery = query(blogsRef, orderBy("date", "desc"));
-  //     }
-
-  //     if (blogsQuery) {
-  //       const snapshot = await getDocs(blogsQuery);
-  //       if (snapshot.empty) {
-  //         setError("No blogs found.");
-  //         setBlogs([]);
-  //       } else {
-  //         const blogsArray = snapshot.docs.map((doc) => ({
-  //           id: doc.id,
-  //           ...doc.data(),
-  //         }));
-  //         setBlogs(blogsArray);
-  //         setError("");
-  //       }
-  //     }
-  //   } catch (err) {
-  //     setError("Error fetching blogs.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  const user = auth.currentUser;
+ 
+ 
   const filterUser = users.filter((item) =>
     item.username.toLowerCase().includes(userName.toLowerCase())
   );
@@ -161,6 +123,7 @@ export const BlogList = () => {
     if (userName) {
       fetchUser();
     }
+
     const ref = collection(db, "follower");
     // Check if the follower relationship already exists
     onSnapshot(query(ref), (snapshot) => {
@@ -217,6 +180,8 @@ export const BlogList = () => {
             doc.data().follower_email === user.email
         );
         setFollowed(isFollowed);
+
+       
       }
     });
   
@@ -224,6 +189,7 @@ export const BlogList = () => {
     if (!isFollowed) {
       await addDoc(ref, newFollower);
     }
+    
   };
   if (error) return <p className="text-center text-red-500">{error}</p>;
 

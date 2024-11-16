@@ -42,61 +42,7 @@ export const Profile = () => {
       item.category_name.toLowerCase().includes(searchData.toLowerCase()) ||
       item.recommand.toLowerCase().includes(searchData.toLowerCase())
   );
-  // const handleDateChange = async (e) => {
-  //   e.preventDefault(); // Prevent default behavior of the form/input
-
-  //   setLoading(true); // Set loading state to true
-
-  //   try {
-  //     const currentUser = auth.currentUser;
-  //     if (!currentUser) {
-  //       setError("User not authenticated.");
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     const selectedDate = e.target.value;
-  //     setDate(selectedDate); // Update the date state with selected value
-
-  //     const ref = collection(db, "blogs");
-  //     let q;
-
-  //     if (selectedDate) {
-  //       q = query(
-  //         ref,
-  //         where("uid", "==", currentUser.uid),
-  //         where("date", "==", selectedDate),
-  //         orderBy("rating", "desc")
-  //       );
-  //     } else {
-  //       q = query(
-  //         ref,
-  //         where("uid", "==", currentUser.uid),
-  //         orderBy("date", "desc")
-  //       );
-  //     }
-
-  //     await onSnapshot(q, (docs) => {
-  //       if (docs.empty) {
-  //         setError("No blogs found.");
-  //       } else {
-  //         const blogsArray = docs.docs.map((doc) => ({
-  //           id: doc.id,
-  //           ...doc.data(),
-  //         }));
-  //         setBlogs(blogsArray);
-  //         setError("");
-  //       }
-  //       setLoading(false);
-  //     });
-  //   } catch (e) {
-  //     setError("Failed to load blogs.");
-  //     setLoading(false);
-  //   }
-
-  //   navigate("/profile");
-  // };
-
+  
   useEffect(() => {
     try {
       let user = auth.currentUser;

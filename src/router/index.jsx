@@ -5,6 +5,7 @@ import { Home } from "../pages/Home.jsx";
 import { Layout } from "../layouts/Layout.jsx";
 import { Search } from "../pages/Search.jsx";
 import { BlogDetail } from "../components/BlogDetail.jsx";
+import{ProfileDetail} from "../components/ProfileDetail.jsx";
 import { BlogForm } from "../pages/BlogForm.jsx";
 import { RegisterForm } from "../pages/Register.jsx";
 import { LoginForm } from "../pages/Login.jsx";
@@ -50,6 +51,10 @@ export default function index() {
           path: "/login",
         element:<LoginForm /> ,
         },
+        {
+          path:"/profile/:id",
+          element:<ProfileDetail/>
+        }
       ],
     },
   ]);
