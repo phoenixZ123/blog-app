@@ -28,7 +28,7 @@ export const BlogList = () => {
   const [users, setUsers] = useState([]);
   let [find, setFind] = useState([]);
   const user = auth.currentUser;
-  let navigate=useNavigate();
+  let navigate = useNavigate();
   const fetchUser = () => {
     const ref = collection(db, "users");
     const q = query(ref, where("username", "==", userName));
@@ -45,13 +45,32 @@ export const BlogList = () => {
         setError("");
         //
         const userEmail = userArray[0].email;
-        if(user.email ===userEmail){
+        if (user.email === userEmail) {
           setError("User Already Has Been Authenticated");
           setUsers([]);
           navigate("/");
         }
         fetchBlogsByUserEmail(userEmail);
         //
+      }
+    });
+    // 
+    // followed
+    const reff = collection(db, "follower");
+    // Check if the follower relationship already exists
+    onSnapshot(query(reff), (snapshot) => {
+      if (snapshot.empty) {
+        setError("No users found.");
+        setUsers([]);
+        setFollowed(false);
+      } else {
+        // Use `some` to check if there is a match, then set `setFollowed`
+        const isFollowed = snapshot.docs.some(
+          (doc) =>
+            doc.data().user_email === email &&
+            doc.data().follower_email === user.email
+        );
+        setFollowed(isFollowed);
       }
     });
   };
@@ -74,74 +93,195 @@ export const BlogList = () => {
   };
   //
 
-  const fetchBlogs = () => {
-    const ref = collection(db, "blogs");
-    const q = query(ref, orderBy("date", "desc"));
+//   const fetchBlogs = () => {
+//     const ref = collection(db, "blogs");
+//     const q = query(ref, orderBy("date", "desc"));
+// // All Blogs
+//     onSnapshot(q, async (snapshot) => {
+//       if (snapshot.empty) {
+//         setError("No blogs found.");
+//         setBlogs([]);
+//       } else {
+//         const blogsArray = await Promise.all(
+//           snapshot.docs.map(async (doc) => {
+//             const blogData = doc.data();
+//             const blogEmail = blogData.email;
 
-    onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty) {
-        setError("No blogs found.");
-        setBlogs([]);
-      } else {
-        const blogsArray = await Promise.all(
-          snapshot.docs.map(async (doc) => {
-            const blogData = doc.data();
-            const blogEmail = blogData.email;
+//             // Fetch username from the users collection based on the blog's email
+//             const userRef = collection(db, "users");
+//             const userQuery = query(userRef, where("email", "==", blogEmail));
+//             const userSnapshot = await getDocs(userQuery);
 
-            // Fetch username from the users collection based on the blog's email
-            const userRef = collection(db, "users");
-            const userQuery = query(userRef, where("email", "==", blogEmail));
-            const userSnapshot = await getDocs(userQuery);
+//             let username = "Unknown User";
+//             if (!userSnapshot.empty) {
+//               // username from users
+//               const userDoc = userSnapshot.docs[0].data();
+//               username = userDoc.username;
+//             }
 
-            let username = "Unknown User";
-            if (!userSnapshot.empty) {
-              // username from users
-              const userDoc = userSnapshot.docs[0].data();
-              username = userDoc.username;
-            }
+//             return {
+//               id: doc.id,
+//               ...blogData,
+//               username, // Add username to the blog object
+//             };
+//           })
+//         );
+//         setBlogs(blogsArray);
+//         setError("");
+//       }
+//       setLoading(false);
+//     });
+//   //  follower blog
+//   // const FollowerRef = collection(db, "follower");
+//   // const queryF = query(
+//   //   FollowerRef,
+//   //   where("follower_email", "==", user.email),
+//   //   orderBy("date", "desc")
+//   // );
+  
+//   //   onSnapshot(queryF, async (userSnapshot) => {
+//   //     if (userSnapshot.empty) {
+//   //       setError("No blogs found.");
+//   //       setBlogs([]);
+//   //       return;
+//   //     }
+//   //     try {
+//   //       const blogsPromises = userSnapshot.docs.map(async (userDoc) => {
+//   //         const user_email = userDoc.data().user_email;
+  
+//   //         const BlogRef = collection(db, "blogs");
+//   //         const BlogQuery = query(
+//   //           BlogRef,
+//   //           where("email", "==", user_email),
+//   //           orderBy("date", "desc")
+//   //         );
+  
+//   //         const blogSnapshot = await getDocs(BlogQuery); // Use `getDocs` instead of `onSnapshot` for a one-time fetch
+//   //         if (blogSnapshot.empty) return [];
+  
+//   //         return blogSnapshot.docs.map((blogDoc) => ({
+//   //           id: blogDoc.id,
+//   //           ...blogDoc.data(),
+//   //         }));
+//   //       });
+//   //       const allBlogs = (await Promise.all(blogsPromises)).flat(); // Flatten the results
+//   //       if (allBlogs.length === 0) {
+//   //         setError("No blogs found.");
+//   //         setBlogs([]);
+//   //       } else {
+//   //         setError(null);
+//   //         setBlogs(allBlogs);
+//   //       }
+//   //     } catch (error) {
+//   //       setError("Error fetching blogs.");
+//   //       console.error(error);
+//   //     }
+//   //   });
+ 
+//   };
+// test
+const fetchBlogs = () => {
+  const blogsRef = collection(db, "blogs");
+  const allBlogsQuery = query(blogsRef, orderBy("date", "desc"));
 
-            return {
-              id: doc.id,
-              ...blogData,
-              username, // Add username to the blog object
-            };
-          })
+  onSnapshot(allBlogsQuery, async (snapshot) => {
+    if (snapshot.empty) {
+      setError("No blogs found.");
+      setBlogs([]);
+      return;
+    }
+    try {
+      const blogsArray = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const blogData = doc.data();
+          const blogEmail = blogData.email;
+
+          // Fetch username for each blog
+          const userRef = collection(db, "users");
+          const userQuery = query(userRef, where("email", "==", blogEmail));
+          const userSnapshot = await getDocs(userQuery);
+
+          let username = "Unknown User";
+          if (!userSnapshot.empty) {
+            const userDoc = userSnapshot.docs[0].data();
+            username = userDoc.username;
+          }
+
+          return {
+            id: doc.id,
+            ...blogData,
+            username,
+          };
+        })
+      );
+
+      // If a specific username is searched, filter results by username
+      if (userName) {
+        const filteredBlogs = blogsArray.filter((blog) =>
+          blog.username.toLowerCase().includes(userName.toLowerCase())
         );
+        setBlogs(filteredBlogs.length > 0 ? filteredBlogs : []);
+        // setError(filteredBlogs.length > 0 ? "" : "No blogs found for this user.");
+        fetchUser();
+      } else {
         setBlogs(blogsArray);
         setError("");
       }
-      setLoading(false);
+    } catch (error) {
+      setError("Error fetching blogs.");
+      console.error(error);
+    }
+  });
+
+  // Fetch follower blogs if user is logged in
+  if (user && user.email) {
+    const followerRef = collection(db, "follower");
+    const followerQuery = query(followerRef, where("follower_email", "==", user.email));
+
+    onSnapshot(followerQuery, async (followerSnapshot) => {
+      if (followerSnapshot.empty) return;
+
+      try {
+        const followerBlogsPromises = followerSnapshot.docs.map(async (followerDoc) => {
+          const user_email = followerDoc.data().user_email;
+
+          const userBlogsQuery = query(
+            blogsRef,
+            where("email", "==", user_email),
+            orderBy("date", "desc")
+          );
+
+          const blogSnapshot = await getDocs(userBlogsQuery);
+          return blogSnapshot.docs.map((blogDoc) => ({
+            id: blogDoc.id,
+            ...blogDoc.data(),
+          }));
+        });
+
+        const followerBlogs = (await Promise.all(followerBlogsPromises)).flat();
+        setBlogs((prevBlogs) => [...prevBlogs, ...followerBlogs]);
+      } catch (error) {
+        console.error("Error fetching follower blogs:", error);
+      }
     });
-  };
- 
- 
+  }
+  setLoading(false);
+};
+
   const filterUser = users.filter((item) =>
     item.username.toLowerCase().includes(userName.toLowerCase())
   );
+
   const email = filterUser[0]?.email;
   useEffect(() => {
-    if (userName) {
+     // fetch Follower blogs
+   
+     if (userName) {
       fetchUser();
+     
     }
-
-    const ref = collection(db, "follower");
-    // Check if the follower relationship already exists
-    onSnapshot(query(ref), (snapshot) => {
-      if (snapshot.empty) {
-        setError("No users found.");
-        setUsers([]);
-        setFollowed(false);
-      } else {
-        // Use `some` to check if there is a match, then set `setFollowed`
-        const isFollowed = snapshot.docs.some(
-          (doc) =>
-            doc.data().user_email === email &&
-            doc.data().follower_email === user.email
-        );
-        setFollowed(isFollowed);
-      }
-    });
-    fetchBlogs();
+      fetchBlogs();
+    
 
     if (!user) {
       setError("User not authenticated.");
@@ -149,23 +289,22 @@ export const BlogList = () => {
       return;
     }
     setError("");
-  }, [userName,user,email]);
+  }, [userName, user, email]);
 
-  
   let [followed, setFollowed] = useState(false);
   const handleFollow = async (e) => {
     e.preventDefault();
-  
+
     // Extract the first email from filterUser, assuming it's an array of objects
     const email = filterUser[0]?.email;
-  
+
     const newFollower = {
       user_email: email,
       follower_email: user.email,
     };
-  
+
     const ref = collection(db, "follower");
-  
+
     // Check if the follower relationship already exists
     onSnapshot(query(ref), (snapshot) => {
       if (snapshot.empty) {
@@ -180,16 +319,13 @@ export const BlogList = () => {
             doc.data().follower_email === user.email
         );
         setFollowed(isFollowed);
-
-       
       }
     });
-  
+
     // Add the new follower if not already followed
     if (!isFollowed) {
       await addDoc(ref, newFollower);
     }
-    
   };
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
@@ -199,7 +335,7 @@ export const BlogList = () => {
       item.category_name.toLowerCase().includes(search.toLowerCase()) ||
       item.recommand.toLowerCase().includes(search.toLowerCase())
   );
-  
+
   const deleteBlog = async (e, id) => {
     e.preventDefault();
     try {
@@ -208,8 +344,7 @@ export const BlogList = () => {
       setError("Failed to delete blog.");
     }
   };
-  
-  
+
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
@@ -223,22 +358,28 @@ export const BlogList = () => {
               <button
                 onClick={handleFollow}
                 className="hover:text-primary active:text-white flex justify-center items-center p-1 hover:bg-indigo-400 rounded-md text-white bg-indigo-500"
-              >{followed ? <div>Followed</div> : <><div>Follow</div>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="size-5 mt-1"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
-                  />
-                </svg></>}
-                
+              >
+                {followed ? (
+                  <div>Followed</div>
+                ) : (
+                  <>
+                    <div>Follow</div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-5 mt-1"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4.5v15m7.5-7.5h-15"
+                      />
+                    </svg>
+                  </>
+                )}
               </button>
               <div className="text-center mb-4">
                 <div className="w-24 h-24 mx-auto rounded-full bg-blue-200 flex items-center justify-center text-4xl text-blue-700 font-bold uppercase">
