@@ -65,7 +65,7 @@ export const BlogList = () => {
         //
         const userEmail = userArray[0].email;
         if (user.displayName === userName) {
-          fetAllBlogs();
+          fetchFollowerData();
         }
         fetchBlogsByUserEmail(userEmail);
         //
@@ -297,21 +297,104 @@ export const BlogList = () => {
       }
     });
   };
+  const fetchFollowerData = () => {
+    const ref = collection(db, "follower");
+    const fquery = query(ref, where("follower_email", "==", user.email));
+  
+    onSnapshot(fquery, async (snapshot) => {
+      if (snapshot.empty) {
+        setError("Blogs not found because you haven't followed anyone.");
+        setBlogs([]);
+        setLoading(false);
+        return;
+      }
+  
+      // Get all followed users' emails
+      const followData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+  
+      const followedEmails = followData.map((data) => data.user_email);
+  
+      if (followedEmails.length === 0) {
+        setError("No blogs found.");
+        setBlogs([]);
+        setLoading(false);
+        return;
+      }
+  
+      try {
+        // Fetch blogs for all followed emails
+        const blogRef = collection(db, "blogs");
+        const emailChunks = [];
+        while (followedEmails.length) {
+          emailChunks.push(followedEmails.splice(0, 10)); // Firestore 'in' supports max 10 items
+        }
+      
+        const blogsArray = [];
+        for (const chunk of emailChunks) {
+          const q = query(blogRef, where("email", "in", chunk), orderBy("date", "desc"));
+          const blogSnapshot = await getDocs(q);
+      
+          // Process each blog
+          const blogPromises = blogSnapshot.docs.map(async (doc) => {
+            const blogData = doc.data();
+            const blogEmail = blogData.email;
+      
+            // Fetch username for the blog's email
+            const userRef = collection(db, "users");
+            const userQuery = query(userRef, where("email", "==", blogEmail));
+            const userSnapshot = await getDocs(userQuery);
+      
+            let username = "Unknown User";
+            if (!userSnapshot.empty) {
+              const userDoc = userSnapshot.docs[0].data();
+              username = userDoc.username;
+            }
+      
+            return {
+              id: doc.id,
+              ...blogData,
+              username, // Attach the username
+            };
+          });
+      
+          // Wait for all blogPromises to resolve
+          const chunkBlogs = await Promise.all(blogPromises);
+          blogsArray.push(...chunkBlogs);
+        }
+      
+        setBlogs(blogsArray);
+        setError(blogsArray.length > 0 ? "" : "No blogs found.");
+        setLoading(false);
+      } catch (error) {
+        setError("Error fetching blogs.");
+        console.error(error);
+        setLoading(false);
+      }
+      
+    });
+  };
+  
   const email = filterUser[0]?.email;
   useEffect(() => {
     // fetch Follower blogs
     if (userName) {
       fetchUser();
-      fetchUserBlogs();
+      // fetchUserBlogs();
+      // fetchFollowerData();
+    } else {
+      // fetchUser();
+      fetchFollowerData();
+      setBlogs([]);
+      setUsers([]);
     }
     if (!user) {
       setError("User not authenticated.");
       setLoading(false);
       return;
     }
-
-    // fetchUserBlogs();
-  
 
     setError("");
   }, [userName, user, email]);
@@ -369,7 +452,7 @@ export const BlogList = () => {
       setError("Failed to delete blog.");
     }
   };
-
+console.log(filteredData);
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}

@@ -133,7 +133,7 @@ export const Navbar = () => {
             </svg>
 
             <span className="font-bold text-xl text-primary hidden md:block">
-              My Blog Channel
+               Blog Channel
             </span>
           </Link>
 
