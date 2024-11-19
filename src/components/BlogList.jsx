@@ -65,7 +65,9 @@ export const BlogList = () => {
         //
         const userEmail = userArray[0].email;
         if (user.displayName === userName) {
-          fetchFollowerData();
+          setError("Username already has been authentication");
+          navigate("/");
+          // fetchFollowerData();
         }
         // fetchFollowerData();
         // fetchBlogsByUserEmail(userEmail);
@@ -97,93 +99,6 @@ export const BlogList = () => {
     item.username.toLowerCase().includes(userName.toLowerCase())
   );
 
-  //   const fetchBlogs = () => {
-  //     const ref = collection(db, "blogs");
-  //     const q = query(ref, orderBy("date", "desc"));
-  // // All Blogs
-  //     onSnapshot(q, async (snapshot) => {
-  //       if (snapshot.empty) {
-  //         setError("No blogs found.");
-  //         setBlogs([]);
-  //       } else {
-  //         const blogsArray = await Promise.all(
-  //           snapshot.docs.map(async (doc) => {
-  //             const blogData = doc.data();
-  //             const blogEmail = blogData.email;
-
-  //             // Fetch username from the users collection based on the blog's email
-  //             const userRef = collection(db, "users");
-  //             const userQuery = query(userRef, where("email", "==", blogEmail));
-  //             const userSnapshot = await getDocs(userQuery);
-
-  //             let username = "Unknown User";
-  //             if (!userSnapshot.empty) {
-  //               // username from users
-  //               const userDoc = userSnapshot.docs[0].data();
-  //               username = userDoc.username;
-  //             }
-
-  //             return {
-  //               id: doc.id,
-  //               ...blogData,
-  //               username, // Add username to the blog object
-  //             };
-  //           })
-  //         );
-  //         setBlogs(blogsArray);
-  //         setError("");
-  //       }
-  //       setLoading(false);
-  //     });
-  //   //  follower blog
-  //   // const FollowerRef = collection(db, "follower");
-  //   // const queryF = query(
-  //   //   FollowerRef,
-  //   //   where("follower_email", "==", user.email),
-  //   //   orderBy("date", "desc")
-  //   // );
-
-  //   //   onSnapshot(queryF, async (userSnapshot) => {
-  //   //     if (userSnapshot.empty) {
-  //   //       setError("No blogs found.");
-  //   //       setBlogs([]);
-  //   //       return;
-  //   //     }
-  //   //     try {
-  //   //       const blogsPromises = userSnapshot.docs.map(async (userDoc) => {
-  //   //         const user_email = userDoc.data().user_email;
-
-  //   //         const BlogRef = collection(db, "blogs");
-  //   //         const BlogQuery = query(
-  //   //           BlogRef,
-  //   //           where("email", "==", user_email),
-  //   //           orderBy("date", "desc")
-  //   //         );
-
-  //   //         const blogSnapshot = await getDocs(BlogQuery); // Use `getDocs` instead of `onSnapshot` for a one-time fetch
-  //   //         if (blogSnapshot.empty) return [];
-
-  //   //         return blogSnapshot.docs.map((blogDoc) => ({
-  //   //           id: blogDoc.id,
-  //   //           ...blogDoc.data(),
-  //   //         }));
-  //   //       });
-  //   //       const allBlogs = (await Promise.all(blogsPromises)).flat(); // Flatten the results
-  //   //       if (allBlogs.length === 0) {
-  //   //         setError("No blogs found.");
-  //   //         setBlogs([]);
-  //   //       } else {
-  //   //         setError(null);
-  //   //         setBlogs(allBlogs);
-  //   //       }
-  //   //     } catch (error) {
-  //   //       setError("Error fetching blogs.");
-  //   //       console.error(error);
-  //   //     }
-  //   //   });
-
-  //   };
-  // test
 
   const fetchUserBlogs = () => {
     const blogsRef = collection(db, "blogs");

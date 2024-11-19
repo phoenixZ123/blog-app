@@ -7,6 +7,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -27,6 +28,8 @@ export const Profile = () => {
   const params = new URLSearchParams(location.search);
   const searchData = params.get("search") || "";
   let [ratingFilter, setRatingFilter] = useState("");
+  let [followingCount, setFollowingCount] = useState(null);
+  let [followerCount, setFollowerCount] = useState(null);
 
   const handleSearch = () => {
     navigate(`/profile/?search=${search}`);
@@ -42,7 +45,7 @@ export const Profile = () => {
       item.category_name.toLowerCase().includes(searchData.toLowerCase()) ||
       item.recommand.toLowerCase().includes(searchData.toLowerCase())
   );
-  const UserProfile=()=>{
+  const UserProfile = () => {
     try {
       let user = auth.currentUser;
 
@@ -76,16 +79,93 @@ export const Profile = () => {
       setError("Failed to load blogs.");
       setLoading(false);
     }
-  }
+  };
+
   useEffect(() => {
-   if(user){
-    UserProfile();
-   }
-  }, [user]);
+    if (user) {
+      UserProfile();
+    }
+    followingCountFunc();
 
-  const followingCount=()=>{
+    handleMonthChange();
+  }, [user, ratingFilter]);
 
-  }
+  const followingCountFunc = async () => {
+    const ref = collection(db, "follower");
+
+    try {
+      // Calculate Following Count
+      const followingQuery = query(
+        ref,
+        where("follower_email", "==", user.email)
+      );
+      const followingSnapshot = await getDocs(followingQuery);
+      const followingCount = followingSnapshot.size; // Count of documents
+
+      // Calculate Follower Count
+      const followerQuery = query(ref, where("user_email", "==", user.email));
+      const followerSnapshot = await getDocs(followerQuery);
+      const followerCount = followerSnapshot.size; // Count of documents
+
+      // Update state or display these counts
+      setFollowingCount(followingCount);
+      setFollowerCount(followerCount);
+    } catch (error) {
+      console.error("Error calculating counts:", error);
+    }
+  };
+
+  const handleMonthChange = () => {
+    setLoading(true);
+    setError("");
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        setError("User not authenticated.");
+        setLoading(false);
+        return;
+      }
+  
+      const ref = collection(db, "blogs");
+      let q;
+  
+     
+        // If no month is selected, retrieve all blogs for the user
+        q = query(
+          ref,
+          where("email", "==", currentUser.email),
+          orderBy("rating", "desc"),
+          orderBy("date", "desc")
+        );
+     
+  
+      onSnapshot(q, (docs) => {
+        if (docs.empty) {
+          setBlogs([]);
+          setError("No blogs found.");
+        } else {
+          const blogsArray = docs.docs
+            .map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }))
+            .filter((blog) => {
+              if (!month) return true; // Show all blogs if no month is selected
+              const blogMonth = new Date(blog.date).getMonth() + 1; // Extract month (1-based)
+              return blogMonth === parseInt(month);
+            });
+  
+          setBlogs(blogsArray);                 
+        }
+        setError("");
+        setLoading(false);
+      });
+    } catch (e) {
+      setError("Failed to load blogs.");
+      setLoading(false);
+    }
+  };
+  
   const mostRatingBlogs = () => {
     setLoading(true);
     try {
@@ -95,7 +175,7 @@ export const Profile = () => {
         setLoading(false);
         return;
       }
-
+      //
       const ref = collection(db, "blogs");
       let q = query(
         ref,
@@ -107,12 +187,11 @@ export const Profile = () => {
       if (ratingFilter) {
         q = query(
           ref,
-          where("uid", "==", currentUser.uid),
+          where("email", "==", currentUser.email),
           where("rating", "==", parseInt(ratingFilter)),
           orderBy("date", "desc")
         );
       }
-
       onSnapshot(q, (docs) => {
         if (docs.empty) {
           setError("No blogs found.");
@@ -132,52 +211,7 @@ export const Profile = () => {
     }
     navigate("/profile");
   };
-  const handleMonthChange = () => {
-    setLoading(true);
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        setError("User not authenticated.");
-        setLoading(false);
-        return;
-      }
 
-      const ref = collection(db, "blogs");
-      let q = query(
-        ref,
-        where("email", "==", currentUser.email),
-        orderBy("rating", "desc"),
-        orderBy("date", "desc")
-      );
-      const selectedMonth = month;
-      if (month) {
-        q = query(
-          ref,
-          where("email", "==", currentUser.email),
-          where("month", "==", selectedMonth),
-          orderBy("rating", "desc")
-        );
-      }
-
-      onSnapshot(q, (docs) => {
-        if (docs.empty) {
-          setError("No blogs found.");
-        } else {
-          const blogsArray = docs.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setBlogs(blogsArray);
-          setError("");
-        }
-        setLoading(false);
-      });
-    } catch (e) {
-      setError("Failed to load blogs.");
-      setLoading(false);
-    }
-    navigate("/profile");
-  };
   const AllBlogs = () => {
     setLoading(true);
     try {
@@ -222,7 +256,6 @@ export const Profile = () => {
     await deleteDoc(ref);
   };
 
-  
   return (
     <div className="h-screen  bg-fixed bg-cover ">
       <div className="overflow-y-auto">
@@ -263,10 +296,10 @@ export const Profile = () => {
         {/* Blog Interaction Buttons */}
         <div className="w-full flex justify-center space-x-5 p-3">
           <button className="bg-blue-500 text-white py-1 px-4 rounded">
-            Follower
+            Follower {followerCount}
           </button>
           <button className="bg-blue-500 text-white py-1 px-4 rounded">
-            Following 
+            Following {followingCount}
           </button>
         </div>
 
@@ -284,7 +317,6 @@ export const Profile = () => {
             onClick={mostRatingBlogs}
           >
             {/* Rating Filter Dropdown */}
-
             <div className="my-4">
               <select
                 value={ratingFilter}
