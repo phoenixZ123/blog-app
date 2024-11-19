@@ -67,7 +67,8 @@ export const BlogList = () => {
         if (user.displayName === userName) {
           fetchFollowerData();
         }
-        fetchBlogsByUserEmail(userEmail);
+        // fetchFollowerData();
+        // fetchBlogsByUserEmail(userEmail);
         //
       }
     });
@@ -382,13 +383,10 @@ export const BlogList = () => {
     // fetch Follower blogs
     if (userName) {
       fetchUser();
-      // fetchUserBlogs();
-      // fetchFollowerData();
     } else {
-      // fetchUser();
       fetchFollowerData();
-      setBlogs([]);
-      setUsers([]);
+      // setBlogs([]);
+      
     }
     if (!user) {
       setError("User not authenticated.");
@@ -400,12 +398,10 @@ export const BlogList = () => {
   }, [userName, user, email]);
 
   let [followed, setFollowed] = useState(false);
-  const handleFollow = async (e) => {
+  const handleFollow =  (e) => {
     e.preventDefault();
-
     // Extract the first email from filterUser, assuming it's an array of objects
     const email = filterUser[0]?.email;
-
     const newFollower = {
       user_email: email,
       follower_email: user.email,
@@ -414,7 +410,7 @@ export const BlogList = () => {
     const ref = collection(db, "follower");
 
     // Check if the follower relationship already exists
-    onSnapshot(query(ref), (snapshot) => {
+    onSnapshot(ref, (snapshot) => {
       if (snapshot.empty) {
         setError("No users found.");
         setUsers([]);
@@ -426,14 +422,16 @@ export const BlogList = () => {
             doc.data().user_email === email &&
             doc.data().follower_email === user.email
         );
-        setFollowed(isFollowed);
+        if (isFollowed) {
+          setFollowed(isFollowed);
+        }else{
+             addDoc(ref, newFollower);
+        }
       }
     });
-
     // Add the new follower if not already followed
-    if (!isFollowed) {
-      await addDoc(ref, newFollower);
-    }
+   
+    console.log(newFollower)
   };
   if (error) return <p className="text-center text-red-500">{error}</p>;
 

@@ -42,8 +42,7 @@ export const Profile = () => {
       item.category_name.toLowerCase().includes(searchData.toLowerCase()) ||
       item.recommand.toLowerCase().includes(searchData.toLowerCase())
   );
-  
-  useEffect(() => {
+  const UserProfile=()=>{
     try {
       let user = auth.currentUser;
 
@@ -52,7 +51,6 @@ export const Profile = () => {
         setLoading(false);
         return;
       }
-
       const ref = collection(db, "blogs");
       let q = query(
         ref,
@@ -78,7 +76,16 @@ export const Profile = () => {
       setError("Failed to load blogs.");
       setLoading(false);
     }
-  }, []);
+  }
+  useEffect(() => {
+   if(user){
+    UserProfile();
+   }
+  }, [user]);
+
+  const followingCount=()=>{
+
+  }
   const mostRatingBlogs = () => {
     setLoading(true);
     try {
@@ -215,6 +222,7 @@ export const Profile = () => {
     await deleteDoc(ref);
   };
 
+  
   return (
     <div className="h-screen  bg-fixed bg-cover ">
       <div className="overflow-y-auto">
