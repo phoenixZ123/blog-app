@@ -29,7 +29,7 @@ export const BlogList = () => {
   let [find, setFind] = useState([]);
   const user = auth.currentUser;
   let navigate = useNavigate();
-
+  let [followed, setFollowed] = useState(false);
   //
   const fetchBlogsByUserEmail = async (email) => {
     try {
@@ -301,7 +301,7 @@ export const BlogList = () => {
   const fetchFollowerData = () => {
     const ref = collection(db, "follower");
     const fquery = query(ref, where("follower_email", "==", user.email));
-  
+
     onSnapshot(fquery, async (snapshot) => {
       if (snapshot.empty) {
         setError("Blogs not found because you haven't followed anyone.");
@@ -309,22 +309,22 @@ export const BlogList = () => {
         setLoading(false);
         return;
       }
-  
+
       // Get all followed users' emails
       const followData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-  
+
       const followedEmails = followData.map((data) => data.user_email);
-  
+
       if (followedEmails.length === 0) {
         setError("No blogs found.");
         setBlogs([]);
         setLoading(false);
         return;
       }
-  
+
       try {
         // Fetch blogs for all followed emails
         const blogRef = collection(db, "blogs");
@@ -332,40 +332,44 @@ export const BlogList = () => {
         while (followedEmails.length) {
           emailChunks.push(followedEmails.splice(0, 10)); // Firestore 'in' supports max 10 items
         }
-      
+
         const blogsArray = [];
         for (const chunk of emailChunks) {
-          const q = query(blogRef, where("email", "in", chunk), orderBy("date", "desc"));
+          const q = query(
+            blogRef,
+            where("email", "in", chunk),
+            orderBy("date", "desc")
+          );
           const blogSnapshot = await getDocs(q);
-      
+
           // Process each blog
           const blogPromises = blogSnapshot.docs.map(async (doc) => {
             const blogData = doc.data();
             const blogEmail = blogData.email;
-      
+
             // Fetch username for the blog's email
             const userRef = collection(db, "users");
             const userQuery = query(userRef, where("email", "==", blogEmail));
             const userSnapshot = await getDocs(userQuery);
-      
+
             let username = "Unknown User";
             if (!userSnapshot.empty) {
               const userDoc = userSnapshot.docs[0].data();
               username = userDoc.username;
             }
-      
+
             return {
               id: doc.id,
               ...blogData,
               username, // Attach the username
             };
           });
-      
+
           // Wait for all blogPromises to resolve
           const chunkBlogs = await Promise.all(blogPromises);
           blogsArray.push(...chunkBlogs);
         }
-      
+
         setBlogs(blogsArray);
         setError(blogsArray.length > 0 ? "" : "No blogs found.");
         setLoading(false);
@@ -374,10 +378,9 @@ export const BlogList = () => {
         console.error(error);
         setLoading(false);
       }
-      
     });
   };
-  
+
   const email = filterUser[0]?.email;
   useEffect(() => {
     // fetch Follower blogs
@@ -386,7 +389,6 @@ export const BlogList = () => {
     } else {
       fetchFollowerData();
       // setBlogs([]);
-      
     }
     if (!user) {
       setError("User not authenticated.");
@@ -395,44 +397,75 @@ export const BlogList = () => {
     }
 
     setError("");
-  }, [userName, user, email]);
+  }, [userName, user, email,followed]);
 
-  let [followed, setFollowed] = useState(false);
-  const handleFollow =  (e) => {
+  
+  const handleFollow = (e) => {
     e.preventDefault();
-    // Extract the first email from filterUser, assuming it's an array of objects
-    const email = filterUser[0]?.email;
-    const newFollower = {
-      user_email: email,
-      follower_email: user.email,
-    };
-
+    //
     const ref = collection(db, "follower");
-
-    // Check if the follower relationship already exists
-    onSnapshot(ref, (snapshot) => {
-      if (snapshot.empty) {
-        setError("No users found.");
-        setUsers([]);
-        setFollowed(false);
-      } else {
-        // Use `some` to check if there is a match, then set `setFollowed`
-        const isFollowed = snapshot.docs.some(
-          (doc) =>
-            doc.data().user_email === email &&
-            doc.data().follower_email === user.email
-        );
-        if (isFollowed) {
-          setFollowed(isFollowed);
-        }else{
-             addDoc(ref, newFollower);
-        }
+    if (followed) {
+      // Unfollow logic
+      const followerQuery = query(ref, where("user_email", "==", email), where("follower_email", "==", user.email));
+    
+      getDocs(followerQuery)
+        .then((snapshot) => {
+          if (!snapshot.empty) {
+            snapshot.docs.forEach((doc) => {
+              // Delete each matching document
+              deleteDoc(doc.ref)
+                .then(() => {
+                  setFollowed(false); // Update state to reflect unfollowed status
+                })
+                .catch((error) => {
+                  console.error("Error while unfollowing:", error);
+                });
+            });
+          } else {
+            console.log("No matching follower documents found.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching follower documents:", error);
+        });
+    } else {
+      // Follow logic
+      const email = filterUser[0]?.email; // Extract email from filterUser
+      if (!email) {
+        console.error("No email found to follow.");
+        return;
       }
-    });
-    // Add the new follower if not already followed
-   
-    console.log(newFollower)
+      // Check if already following
+      const checkQuery = query(ref, where("user_email", "==", email), where("follower_email", "==", user.email));
+    
+      getDocs(checkQuery)
+        .then((snapshot) => {
+          if (snapshot.empty) {
+            // Not following, add a new follower document
+            const newFollower = {
+              user_email: email,
+              follower_email: user.email,
+            };
+    
+            addDoc(ref, newFollower)
+              .then(() => {
+                setFollowed(true); // Update state to reflect followed status
+              })
+              .catch((error) => {
+                console.error("Error adding follower:", error);
+              });
+          } else {
+            console.log("Already following this user.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error checking follower status:", error);
+        });
+    }
+    // 
   };
+  // console.log(followed);
+
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
   const filteredData = blogs.filter(
@@ -442,15 +475,15 @@ export const BlogList = () => {
       item.recommand.toLowerCase().includes(search.toLowerCase())
   );
 
-  const deleteBlog = async (e, id) => {
-    e.preventDefault();
-    try {
-      await deleteDoc(doc(db, "blogs", id));
-    } catch (err) {
-      setError("Failed to delete blog.");
-    }
-  };
-console.log(filteredData);
+  // const deleteBlog = async (e, id) => {
+  //   e.preventDefault();
+  //   try {
+  //     await deleteDoc(doc(db, "blogs", id));
+  //   } catch (err) {
+  //     setError("Failed to delete blog.");
+  //   }
+  // };
+  console.log(filteredData);
   return (
     <div className="p-4 overflow-y-auto">
       {loading && <p>Loading ...</p>}
@@ -575,7 +608,7 @@ console.log(filteredData);
                       </span>
                     </div>
                     <div className="flex justify-end space-x-2 mt-2 w-full items-center">
-                      <Link to={`/edit/${item.id}`}>
+                      {/* <Link to={`/edit/${item.id}`}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -590,8 +623,8 @@ console.log(filteredData);
                             d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
                           />
                         </svg>
-                      </Link>
-                      <div onClick={(e) => deleteBlog(e, item.id)}>
+                      </Link> */}
+                      {/* <div onClick={(e) => deleteBlog(e, item.id)}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -606,7 +639,7 @@ console.log(filteredData);
                             d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.021-2.09 2.201v.916m7.5 0a48.268 48.268 0 0 0-7.5 0"
                           />
                         </svg>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 </motion.button>
